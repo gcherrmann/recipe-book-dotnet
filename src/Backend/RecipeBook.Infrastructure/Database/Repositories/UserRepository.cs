@@ -21,9 +21,9 @@ namespace RecipeBook.Infrastructure.Database.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<Domain.Entities.User?> GetByEmail(string email)
+        public async Task<bool> EmailExists(string email)
         {
-            return await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email && u.Active);
+            return await _dbContext.Users.AnyAsync(u => u.Email == email && u.Active);
         }
     }
 }

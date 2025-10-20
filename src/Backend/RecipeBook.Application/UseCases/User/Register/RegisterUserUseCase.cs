@@ -33,7 +33,7 @@ namespace RecipeBook.Application.UseCases.User.Register
 
             await _userRepository.Add(user);
 
-            return new ResponseRegisterUserJson { Name = request.Name };
+            return new ResponseRegisterUserJson { Name = user.Name };
         }
 
         private async Task Validate(RequestRegisterUserJson request)
@@ -42,8 +42,8 @@ namespace RecipeBook.Application.UseCases.User.Register
 
             var result = validator.Validate(request);
 
-            var user = await _userRepository.GetByEmail(request.Email);
-            if(user is { })
+            var emailExists = await _userRepository.EmailExists(request.Email);
+            if(emailExists)
             {
                 result.Errors.Add(new FluentValidation.Results.ValidationFailure(string.Empty, ResourceMessagesException.EMAIL_ALREADY_REGISTERED));
             }

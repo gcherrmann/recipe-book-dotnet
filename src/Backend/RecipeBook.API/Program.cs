@@ -2,6 +2,7 @@ using RecipeBook.API.Filters;
 using RecipeBook.API.Middleware;
 using RecipeBook.Application;
 using RecipeBook.Infrastructure;
+using RecipeBook.Infrastructure.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,4 +35,22 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+MigrateDatabase();
+
 app.Run();
+
+
+void MigrateDatabase()
+{
+    if(builder.Configuration.IsTestEnvironment())
+    {
+        return;
+    }
+
+    var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>()
+        .CreateScope();
+        
+    DatabaseMigration.Migrate(builder.Configuration.GetConnectionString("ConnectionMySql"), serviceScope.ServiceProvider);
+}
+
+public partial class Program { }
