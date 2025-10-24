@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace RecipeBook.Exceptions.ExceptionsBase
 {
-    public class RecipeBookException: SystemException
+    public class InvalidLoginException: RecipeBookException
     {
-        public RecipeBookException(string message) : base(message)
+        public InvalidLoginException(): base(ResourceMessagesException.EMAIL_OR_PASSWORD_INVALID)
         {
             
         }

@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RecipeBook.Domain.Security.Tokens;
+using RecipeBook.Infrastructure.Security.Tokens.Access.Generator;
 using System.Reflection;
 
 
@@ -12,8 +14,9 @@ namespace RecipeBook.Infrastructure
         public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             AddRepositories(services);
+            AddTokens(services, configuration);
 
-            if(configuration.IsTestEnvironment())
+            if (configuration.IsTestEnvironment())
             {
                 return;
             }
@@ -46,6 +49,17 @@ namespace RecipeBook.Infrastructure
         private static void AddRepositories(IServiceCollection services)
         {
             services.AddScoped<Domain.Repositories.User.IUserRepository, Database.Repositories.UserRepository>();
+        }
+
+        private static void AddTokens(IServiceCollection services, IConfiguration configuration)
+        {
+            var expirationTimeMinutes = configuration.GetValue<uint>("Settings:Jwt:ExpirationTimeMinutes");
+            var signingKey = configuration.GetValue<string>("Settings:Jwt:SigningKey");
+
+            services.AddScoped<IAccessTokenGenerator>(option => new JwtTokenGenerator(expirationTimeMinutes, signingKey!));
+            //services.AddScoped<IAccessTokenValidator>(option => new JwtTokenValidator(signingKey!));
+
+            //services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
         }
 
         private static void AddFluentMigrator_MySql(IServiceCollection services, IConfiguration configuration) 

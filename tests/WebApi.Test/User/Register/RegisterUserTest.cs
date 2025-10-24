@@ -11,6 +11,7 @@ namespace WebApi.Test.User.Register
 {
     public class RegisterUserTest : IClassFixture<CustomWebApplicationFactory>
     {
+        private readonly string method = "user";
         private readonly HttpClient _httpClient;
 
         public RegisterUserTest(WebApplicationFactory<Program> factory)
@@ -23,7 +24,7 @@ namespace WebApi.Test.User.Register
         {
             var request = RequestRegisterUserJsonBuilder.Build();
 
-            var response = await _httpClient.PostAsJsonAsync("api/User", request);
+            var response = await _httpClient.PostAsJsonAsync($"api/{method}", request);
 
             response.StatusCode.Should().Be(HttpStatusCode.Created);
 
@@ -32,6 +33,7 @@ namespace WebApi.Test.User.Register
             var responseData = await JsonDocument.ParseAsync(responseBody);
 
             responseData.RootElement.GetProperty("name").GetString().Should().NotBeNullOrWhiteSpace().And.Be(request.Name);
+            responseData.RootElement.GetProperty("tokens").GetProperty("accessToken").GetString().Should().NotBeNullOrEmpty();
         }
     }
 }

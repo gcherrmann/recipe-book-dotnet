@@ -126,13 +126,22 @@
   <data name="EMAIL_INVALID" xml:space="preserve">
     <value>O email inválido.</value>
   </data>
+  <data name="EMAIL_OR_PASSWORD_INVALID" xml:space="preserve">
+    <value>Email ou senha inválidos.</value>
+  </data>
   <data name="NAME_EMPTY" xml:space="preserve">
     <value>O nome não pode estar vazio.</value>
+  </data>
+  <data name="NO_TOKEN" xml:space="preserve">
+    <value>Token não encontrado.</value>
   </data>
   <data name="PASSWORD_EMPTY" xml:space="preserve">
     <value>A senha não pode ser vazia.</value>
   </data>
   <data name="UNKNOWN_ERROR" xml:space="preserve">
     <value>Erro desconhecido</value>
+  </data>
+  <data name="USER_NOT_FOUND" xml:space="preserve">
+    <value>Usuário não encontrado</value>
   </data>
 </root>

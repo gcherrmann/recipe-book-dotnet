@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace RecipeBook.Communication.Responses
 {
-    public class ResponseRegisterUserJson
+    public class ResponseTokensJson
     {
-        public string Name { get; set; } = string.Empty;
-
-        public ResponseTokensJson Tokens { get; set; } = default!;
+        public string AccessToken { get; set; } = string.Empty;
     }
 }

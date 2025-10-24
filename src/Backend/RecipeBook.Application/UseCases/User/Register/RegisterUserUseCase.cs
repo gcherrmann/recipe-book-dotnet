@@ -3,6 +3,7 @@ using RecipeBook.Application.Cryptography;
 using RecipeBook.Communication.Requests;
 using RecipeBook.Communication.Responses;
 using RecipeBook.Domain.Repositories.User;
+using RecipeBook.Domain.Security.Tokens;
 using RecipeBook.Exceptions;
 using RecipeBook.Exceptions.ExceptionsBase;
 
@@ -14,12 +15,15 @@ namespace RecipeBook.Application.UseCases.User.Register
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly PasswordEncripter _passwordEncripter;
+        private readonly IAccessTokenGenerator _accessTokenGenerator;
 
-        public RegisterUserUseCase(IUserRepository userRepository, IMapper mapper, PasswordEncripter passwordEncripter)
+        public RegisterUserUseCase(IUserRepository userRepository, IMapper mapper, PasswordEncripter passwordEncripter,
+            IAccessTokenGenerator accessTokenGenerator)
         {
             _userRepository = userRepository;
             _mapper = mapper;
             _passwordEncripter = passwordEncripter;
+            _accessTokenGenerator = accessTokenGenerator;
         }
 
         public async Task<ResponseRegisterUserJson> Execute(RequestRegisterUserJson request)
@@ -31,7 +35,10 @@ namespace RecipeBook.Application.UseCases.User.Register
 
             user.Password = _passwordEncripter.Encrypt(request.Password);
 
+            user.UserIdentifier = Guid.NewGuid();
+
             await _userRepository.Add(user);
+
 
             return new ResponseRegisterUserJson { Name = user.Name };
         }

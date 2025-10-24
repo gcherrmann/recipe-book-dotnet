@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using RecipeBook.Communication.Requests;
 using RecipeBook.Communication.Responses;
 using RecipeBook.Application.UseCases.User.Register;
+using Microsoft.AspNetCore.Authorization;
+using RecipeBook.API.Attributes;
 
 namespace RecipeBook.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AuthenticatedUser]
     public class UserController : ControllerBase
     {
         [HttpPost]

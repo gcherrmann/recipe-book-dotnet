@@ -15,7 +15,8 @@ namespace RecipeBook.Infrastructure.Migrations.Versions
             CreateTable("Users")
                 .WithColumn("Name").AsString(100).NotNullable()
                 .WithColumn("Email").AsString(100).NotNullable()
-                .WithColumn("Password").AsString(255).NotNullable();
+                .WithColumn("Password").AsString(255).NotNullable()
+                .WithColumn("UserIdentifier").AsGuid().NotNullable();
         }
     }
 }

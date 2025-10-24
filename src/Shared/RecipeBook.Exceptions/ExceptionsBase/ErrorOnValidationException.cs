@@ -7,13 +7,11 @@ using System.Threading.Tasks;
 
 namespace RecipeBook.Exceptions.ExceptionsBase
 {
-    
-
     public class ErrorOnValidationException : RecipeBookException
     {
         public IList<string> Errors { get; set; } = new List<string>();
 
-        public ErrorOnValidationException(IList<string> errors)
+        public ErrorOnValidationException(IList<string> errors): base(string.Empty)
         {
             Errors = errors;
         }

@@ -2,6 +2,7 @@
 using CommonTestUtilities.Mapper;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
+using CommonTestUtilities.Tokens;
 using FluentAssertions;
 using RecipeBook.Application.UseCases.User.Register;
 using RecipeBook.Exceptions;
@@ -26,7 +27,9 @@ namespace UseCases.Test.User.Register
             var result = await useCase.Execute(request);
 
             result.Should().NotBeNull();
+            result.Tokens.Should().NotBeNull();
             result.Name.Should().Be(request.Name);
+            result.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
 
         }
 
@@ -60,7 +63,10 @@ namespace UseCases.Test.User.Register
             var mapper = MapperBuilder.Builder();
             var passwordEncripter = PasswordEncrypterBuilder.Build();
             var userRepository = new UserRepositoryBuilder().Build();
-            return new RegisterUserUseCase(userRepository, mapper, passwordEncripter);
+            var accessTokenGenerator = JwtTokenGeneratorBuilder.Build();
+
+
+            return new RegisterUserUseCase(userRepository, mapper, passwordEncripter, accessTokenGenerator);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RecipeBook.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,5 +26,14 @@ namespace RecipeBook.Infrastructure.Database.Repositories
         {
             return await _dbContext.Users.AnyAsync(u => u.Email == email && u.Active);
         }
+
+        public async Task<User?> GetByEmailAndPassword(string email, string password)
+        {
+            return await _dbContext.Users
+                .FirstOrDefaultAsync(u => u.Email == email && u.Password == password && u.Active);
+        }
+
+        public async Task<bool> ExistActiveUserWithIdentifier(Guid userIdentifier) => await _dbContext.Users.AnyAsync(user => user.UserIdentifier.Equals(userIdentifier) && user.Active);
+
     }
 }
