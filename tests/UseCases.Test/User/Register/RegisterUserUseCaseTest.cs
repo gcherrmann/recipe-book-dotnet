@@ -4,64 +4,72 @@ using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
 using CommonTestUtilities.Tokens;
 using FluentAssertions;
-using RecipeBook.Application.UseCases.User.Register;
-using RecipeBook.Exceptions;
-using RecipeBook.Exceptions.ExceptionsBase;
+using MyRecipeBook.Application.UseCases.User.Register;
+using MyRecipeBook.Domain.Extensions;
+using MyRecipeBook.Exceptions;
+using MyRecipeBook.Exceptions.ExceptionsBase;
+using Xunit;
 
-namespace UseCases.Test.User.Register
+namespace UseCases.Test.User.Register;
+
+public class RegisterUserUseCaseTest
 {
-    public class RegisterUserUseCaseTest
+    [Fact]
+    public async Task Success()
     {
-        [Fact]
-        public async Task Success()
-        {
+        var request = RequestRegisterUserJsonBuilder.Build();
 
-            var request = RequestRegisterUserJsonBuilder.Build();
+        var useCase = CreateUseCase();
 
-            var useCase = CreateUseCase();
-            var result = await useCase.Execute(request);
+        var result = await useCase.Execute(request);
 
-            result.Should().NotBeNull();
-            result.Tokens.Should().NotBeNull();
-            result.Name.Should().Be(request.Name);
-            result.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
+        result.Should().NotBeNull();
+        result.Tokens.Should().NotBeNull();
+        result.Tokens.AccessToken.Should().NotBeNullOrEmpty();
+        result.Name.Should().Be(request.Name);
+    }
 
-        }
+    [Fact]
+    public async Task Error_Email_Already_Registered()
+    {
+        var request = RequestRegisterUserJsonBuilder.Build();
 
-        [Fact]
-        public async Task Email_Already_Exists()
-        {
-            var request = RequestRegisterUserJsonBuilder.Build();
-            var useCase = CreateUseCase(request.Email);
-            Func<Task> action = async () => await useCase.Execute(request);
+        var useCase = CreateUseCase(request.Email);
 
-            (await action.Should().ThrowAsync<ErrorOnValidationException>())
-                .Where(e => e.Errors.Count == 1 && e.Errors.Contains(ResourceMessagesException.EMAIL_ALREADY_REGISTERED));
+        Func<Task> act = async () => await useCase.Execute(request);
 
-        }
+        (await act.Should().ThrowAsync<ErrorOnValidationException>())
+            .Where(e => e.GetErrorMessages().Count == 1 && e.GetErrorMessages().Contains(ResourceMessagesException.EMAIL_ALREADY_REGISTERED));
+    }
 
-        [Fact]
-        public async Task Name_Empty()
-        {
-            var request = RequestRegisterUserJsonBuilder.Build();
-            var useCase = CreateUseCase();
-            Func<Task> action = async () => await useCase.Execute(request);
+    [Fact]
+    public async Task Error_Name_Empty()
+    {
+        var request = RequestRegisterUserJsonBuilder.Build();
+        request.Name = string.Empty;
 
-            (await action.Should().ThrowAsync<ErrorOnValidationException>())
-                .Where(e => e.Errors.Count == 1 && e.Errors.Contains(ResourceMessagesException.NAME_EMPTY));
+        var useCase = CreateUseCase();
 
-        }
+        Func<Task> act = async () => await useCase.Execute(request);
 
-        private RegisterUserUseCase CreateUseCase(string email = null)
-        {
+        (await act.Should().ThrowAsync<ErrorOnValidationException>())
+            .Where(e => e.GetErrorMessages().Count == 1 && e.GetErrorMessages().Contains(ResourceMessagesException.NAME_EMPTY));
+    }
 
-            var mapper = MapperBuilder.Build();
-            var passwordEncripter = PasswordEncripterBuilder.Build();
-            var userRepository = new UserRepositoryBuilder().Build();
-            var accessTokenGenerator = JwtTokenGeneratorBuilder.Build();
+    private static RegisterUserUseCase CreateUseCase(string? email = null)
+    {
+        var mapper = MapperBuilder.Build();
+        var passwordEncripter = PasswordEncripterBuilder.Build();
+        var writeRepository = UserWriteOnlyRepositoryBuilder.Build();
+        var unitOfWork = UnitOfWorkBuilder.Build();
+        var readRepositoryBuilder = new UserReadOnlyRepositoryBuilder();
+        var accessTokenGenerator = JwtTokenGeneratorBuilder.Build();
+        var refreshTokenGenerator = RefreshTokenGeneratorBuilder.Build();
+        var tokenRepository = new TokenRepositoryBuilder().Build();
 
+        if (email.NotEmpty())
+            readRepositoryBuilder.ExistActiveUserWithEmail(email);
 
-            return new RegisterUserUseCase(userRepository, mapper, passwordEncripter, accessTokenGenerator);
-        }
+        return new RegisterUserUseCase(writeRepository, readRepositoryBuilder.Build(), unitOfWork, passwordEncripter, accessTokenGenerator, mapper, tokenRepository, refreshTokenGenerator);
     }
 }

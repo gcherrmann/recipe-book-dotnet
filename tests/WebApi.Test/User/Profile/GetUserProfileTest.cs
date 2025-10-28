@@ -2,39 +2,39 @@
 using FluentAssertions;
 using System.Net;
 using System.Text.Json;
+using Xunit;
 
-namespace WebApi.Test.User.Profile
+namespace WebApi.Test.User.Profile;
+
+public class GetUserProfileTest : MyRecipeBookClassFixture
 {
-    public class GetUserProfileTest : RecipeBookClassFixture
+    private readonly string METHOD = "user";
+
+    private readonly string _name;
+    private readonly string _email;
+    private readonly Guid _userIdentifier;
+
+    public GetUserProfileTest(CustomWebApplicationFactory factory) : base(factory)
     {
-        private readonly string METHOD = "user";
+        _name = factory.GetName();
+        _email = factory.GetEmail();
+        _userIdentifier = factory.GetUserIdentifier();
+    }
 
-        private readonly string _name;
-        private readonly string _email;
-        private readonly Guid _userIdentifier;
+    [Fact]
+    public async Task Success()
+    {
+        var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
 
-        public GetUserProfileTest(CustomWebApplicationFactory factory) : base(factory)
-        {
-            _name = factory.GetName();
-            _email = factory.GetEmail();
-            _userIdentifier = factory.GetUserIdentifier();
-        }
+        var response = await DoGet(METHOD, token: token);
 
-        [Fact]
-        public async Task Success()
-        {
-            var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-            var response = await DoGet(METHOD, token: token);
+        await using var responseBody = await response.Content.ReadAsStreamAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var responseData = await JsonDocument.ParseAsync(responseBody);
 
-            await using var responseBody = await response.Content.ReadAsStreamAsync();
-
-            var responseData = await JsonDocument.ParseAsync(responseBody);
-
-            responseData.RootElement.GetProperty("name").GetString().Should().NotBeNullOrWhiteSpace().And.Be(_name);
-            responseData.RootElement.GetProperty("email").GetString().Should().NotBeNullOrWhiteSpace().And.Be(_email);
-        }
+        responseData.RootElement.GetProperty("name").GetString().Should().NotBeNullOrWhiteSpace().And.Be(_name);
+        responseData.RootElement.GetProperty("email").GetString().Should().NotBeNullOrWhiteSpace().And.Be(_email);
     }
 }

@@ -1,20 +1,14 @@
 ﻿using Bogus;
-using RecipeBook.Communication.Requests;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MyRecipeBook.Communication.Requests;
 
-namespace CommonTestUtilities.Requests
+namespace CommonTestUtilities.Requests;
+
+public class RequestLoginJsonBuilder
 {
-    public class RequestLoginJsonBuilder
+    public static RequestLoginJson Build()
     {
-        public static RequestLoginJson Build()
-        {
-            return new Faker<RequestLoginJson>()
-                .RuleFor(r => r.Email, f => f.Internet.Email())
-                .RuleFor(r => r.Password, f => f.Internet.Password());
-        }
+        return new Faker<RequestLoginJson>()
+            .RuleFor(u => u.Email, (f) => f.Internet.Email())
+            .RuleFor(u => u.Password, (f) => f.Internet.Password());
     }
 }

@@ -1,82 +1,82 @@
 ﻿using CommonTestUtilities.Requests;
 using CommonTestUtilities.Tokens;
 using FluentAssertions;
-using RecipeBook.Communication.Requests;
-using RecipeBook.Exceptions;
+using MyRecipeBook.Communication.Requests;
+using MyRecipeBook.Exceptions;
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using WebApi.Test.InlineData;
+using Xunit;
 
-namespace WebApi.Test.User.ChangePassword
+namespace WebApi.Test.User.ChangePassword;
+
+public class ChangePasswordTest : MyRecipeBookClassFixture
 {
-    public class ChangePasswordTest : RecipeBookClassFixture
+    private const string METHOD = "user/change-password";
+
+    private readonly string _password;
+    private readonly string _email;
+    private readonly Guid _userIdentifier;
+
+    public ChangePasswordTest(CustomWebApplicationFactory factory) : base(factory)
     {
-        private const string METHOD = "user/change-password";
+        _password = factory.GetPassword();
+        _email = factory.GetEmail();
+        _userIdentifier = factory.GetUserIdentifier();
+    }
 
-        private readonly string _password;
-        private readonly string _email;
-        private readonly Guid _userIdentifier;
+    [Fact]
+    public async Task Success()
+    {
+        var request = RequestChangePasswordJsonBuilder.Build();
+        request.Password = _password;
 
-        public ChangePasswordTest(CustomWebApplicationFactory factory) : base(factory)
+        var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
+
+        var response = await DoPut(METHOD, request, token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var loginRequest = new RequestLoginJson
         {
-            _password = factory.GetPassword();
-            _email = factory.GetEmail();
-            _userIdentifier = factory.GetUserIdentifier();
-        }
+            Email = _email,
+            Password = _password,
+        };
 
-        [Fact]
-        public async Task Success()
+        response = await DoPost(method: "login", request: loginRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+        loginRequest.Password = request.NewPassword;
+
+        response = await DoPost(method: "login", request: loginRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Theory]
+    [ClassData(typeof(CultureInlineDataTest))]
+    public async Task Error_NewPassword_Empty(string culture)
+    {
+        var request = new RequestChangePasswordJson
         {
-            var request = RequestChangePasswordJsonBuilder.Build();
-            request.Password = _password;
+            Password = _password,
+            NewPassword = string.Empty
+        };
 
-            var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
+        var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
 
-            var response = await DoPut(METHOD, request, token);
+        var response = await DoPut(METHOD, request, token, culture);
 
-            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-            var loginRequest = new RequestLoginJson
-            {
-                Email = _email,
-                Password = _password,
-            };
+        await using var responseBody = await response.Content.ReadAsStreamAsync();
 
-            response = await DoPost("login", loginRequest);
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        var responseData = await JsonDocument.ParseAsync(responseBody);
 
-            loginRequest.Password = request.NewPassword;
+        var errors = responseData.RootElement.GetProperty("errors").EnumerateArray();
 
-            response = await DoPost("login", loginRequest);
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-        }
+        var expectedMessage = ResourceMessagesException.ResourceManager.GetString("PASSWORD_EMPTY", new CultureInfo(culture));
 
-        [Theory]
-        [ClassData(typeof(CultureInlineDataTest))]
-        public async Task Error_NewPassword_Empty(string culture)
-        {
-            var request = new RequestChangePasswordJson
-            {
-                Password = _password,
-                NewPassword = string.Empty
-            };
-
-            var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
-
-            var response = await DoPut(METHOD, request, token, culture);
-
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            await using var responseBody = await response.Content.ReadAsStreamAsync();
-
-            var responseData = await JsonDocument.ParseAsync(responseBody);
-
-            var errors = responseData.RootElement.GetProperty("errors").EnumerateArray();
-
-            var expectedMessage = ResourceMessagesException.ResourceManager.GetString("PASSWORD_EMPTY", new CultureInfo(culture));
-
-            errors.Should().HaveCount(1).And.Contain(c => c.GetString()!.Equals(expectedMessage));
-        }
+        errors.Should().HaveCount(1).And.Contain(c => c.GetString()!.Equals(expectedMessage));
     }
 }

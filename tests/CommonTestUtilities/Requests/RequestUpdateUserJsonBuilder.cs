@@ -1,15 +1,14 @@
 ﻿using Bogus;
-using RecipeBook.Communication.Requests;
+using MyRecipeBook.Communication.Requests;
 
-namespace CommonTestUtilities.Requests
+namespace CommonTestUtilities.Requests;
+
+public class RequestUpdateUserJsonBuilder
 {
-    public class RequestUpdateUserJsonBuilder
+    public static RequestUpdateUserJson Build()
     {
-        public static RequestUpdateUserJson Build()
-        {
-            return new Faker<RequestUpdateUserJson>()
-                .RuleFor(user => user.Name, (f) => f.Person.FirstName)
-                .RuleFor(user => user.Email, (f, user) => f.Internet.Email(user.Name));
-        }
+        return new Faker<RequestUpdateUserJson>()
+            .RuleFor(user => user.Name, (f) => f.Person.FirstName)
+            .RuleFor(user => user.Email, (f, user) => f.Internet.Email(user.Name));
     }
 }

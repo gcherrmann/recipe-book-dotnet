@@ -1,67 +1,63 @@
-﻿using CommonTestUtilities.Entities;
+﻿using CommonTestUtilities.Cryptography;
+using CommonTestUtilities.Entities;
 using CommonTestUtilities.Repositories;
 using CommonTestUtilities.Requests;
 using CommonTestUtilities.Tokens;
 using FluentAssertions;
-using RecipeBook.Application.Cryptography;
-using RecipeBook.Application.UseCases.Login.DoLogin;
-using RecipeBook.Communication.Requests;
-using RecipeBook.Exceptions;
-using RecipeBook.Exceptions.ExceptionsBase;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MyRecipeBook.Application.UseCases.Login.DoLogin;
+using MyRecipeBook.Communication.Requests;
+using MyRecipeBook.Exceptions;
+using MyRecipeBook.Exceptions.ExceptionsBase;
+using Xunit;
 
-namespace UseCases.Test.Login.DoLogin
+namespace UseCases.Test.Login.DoLogin;
+
+public class DoLoginUseCaseTest
 {
-    public class DoLoginUseCaseTest
+    [Fact]
+    public async Task Success()
     {
-        [Fact]
-        public async Task Success()
+        (var user, var password) = UserBuilder.Build();
+
+        var useCase = CreateUseCase(user);
+
+        var result = await useCase.Execute(new RequestLoginJson
         {
-            (var user, var password) = UserBuilder.Build();
+            Email = user.Email,
+            Password = password
+        });
 
-            var useCase = CreateUseCase(user);
+        result.Should().NotBeNull();
+        result.Tokens.Should().NotBeNull();
+        result.Name.Should().NotBeNullOrWhiteSpace().And.Be(user.Name);
+        result.Tokens.AccessToken.Should().NotBeNullOrEmpty();
+    }
 
-            var result = await useCase.Execute(new RequestLoginJson
-            {
-                Email = user.Email,
-                Password = password
-            });
+    [Fact]
+    public async Task Error_Invalid_User()
+    {
+        var request = RequestLoginJsonBuilder.Build();
 
-            result.Should().NotBeNull();
-            result.Tokens.Should().NotBeNull();
-            result.Name.Should().NotBeNullOrWhiteSpace().And.Be("");
-            result.Tokens.AccessToken.Should().NotBeNullOrWhiteSpace();
-        }
+        var useCase = CreateUseCase();
 
-        [Fact]
-        public async Task Error_Invalid_User()
-        {
-            var request = RequestLoginJsonBuilder.Build();
+        Func<Task> act = async () => { await useCase.Execute(request); };
 
-            var useCase = CreateUseCase();
+        await act.Should().ThrowAsync<InvalidLoginException>()
+            .Where(e => e.Message.Equals(ResourceMessagesException.EMAIL_OR_PASSWORD_INVALID));
+    }
 
-            Func<Task> action = async () => await useCase.Execute(request);
+    private static DoLoginUseCase CreateUseCase(MyRecipeBook.Domain.Entities.User? user = null)
+    {
+        var passwordEncripter = PasswordEncripterBuilder.Build();
+        var userReadOnlyRepositoryBuilder = new UserReadOnlyRepositoryBuilder();
+        var accessTokenGenerator = JwtTokenGeneratorBuilder.Build();
+        var refreshTokenGenerator = RefreshTokenGeneratorBuilder.Build();
+        var unitOfWork = UnitOfWorkBuilder.Build();
+        var tokenRepository = new TokenRepositoryBuilder().Build();
 
-            await action.Should().ThrowAsync<InvalidLoginException>()
-                .Where(e => e.Message.Equals(ResourceMessagesException.EMAIL_OR_PASSWORD_INVALID));
-        }
+        if (user is not null)
+            userReadOnlyRepositoryBuilder.GetByEmail(user);
 
-        private static DoLoginUseCase CreateUseCase(RecipeBook.Domain.Entities.User? user = null)
-        {
-            var passwordEncripter = new PasswordEncripter();
-            var userRepositoryBuilder =new UserRepositoryBuilder();
-            var accessTokenGenerator = JwtTokenGeneratorBuilder.Build();
-
-            if (user is { })
-            {
-                userRepositoryBuilder.GetByEmailAndPassword(user);
-            }
-
-            return new DoLoginUseCase(userRepositoryBuilder.Build(), accessTokenGenerator, passwordEncripter);
-        }
+        return new DoLoginUseCase(userReadOnlyRepositoryBuilder.Build(), accessTokenGenerator, passwordEncripter, refreshTokenGenerator, tokenRepository, unitOfWork);
     }
 }

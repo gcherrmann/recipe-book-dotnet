@@ -1,56 +1,56 @@
 ﻿using CommonTestUtilities.Requests;
 using FluentAssertions;
-using RecipeBook.Exceptions;
+using MyRecipeBook.Exceptions;
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using WebApi.Test.InlineData;
+using Xunit;
 
-namespace WebApi.Test.User.Register
+namespace WebApi.Test.User.Register;
+
+public class RegisterUserTest : MyRecipeBookClassFixture
 {
-    public class RegisterUserTest : RecipeBookClassFixture
+    private readonly string METHOD = "user";
+
+    public RegisterUserTest(CustomWebApplicationFactory factory) : base(factory) { }
+
+    [Fact]
+    public async Task Success()
     {
-        private readonly string METHOD = "user";
+        var request = RequestRegisterUserJsonBuilder.Build();
 
-        public RegisterUserTest(CustomWebApplicationFactory factory) : base(factory) { }
+        var response = await DoPost(method: METHOD, request: request);
 
-        [Fact]
-        public async Task Success()
-        {
-            var request = RequestRegisterUserJsonBuilder.Build();
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-            var response = await DoPost(METHOD, request);
+        await using var responseBody = await response.Content.ReadAsStreamAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var responseData = await JsonDocument.ParseAsync(responseBody);
 
-            await using var responseBody = await response.Content.ReadAsStreamAsync();
+        responseData.RootElement.GetProperty("name").GetString().Should().NotBeNullOrWhiteSpace().And.Be(request.Name);
+        responseData.RootElement.GetProperty("tokens").GetProperty("accessToken").GetString().Should().NotBeNullOrWhiteSpace();
+    }
 
-            var responseData = await JsonDocument.ParseAsync(responseBody);
+    [Theory]
+    [ClassData(typeof(CultureInlineDataTest))]
+    public async Task Error_Empty_Name(string culture)
+    {
+        var request = RequestRegisterUserJsonBuilder.Build();
+        request.Name = string.Empty;
 
-            responseData.RootElement.GetProperty("name").GetString().Should().NotBeNullOrWhiteSpace().And.Be(request.Name);
-            responseData.RootElement.GetProperty("tokens").GetProperty("accessToken").GetString().Should().NotBeNullOrWhiteSpace();
-        }
+        var response = await DoPost(method: METHOD, request: request, culture: culture);
 
-        [Theory]
-        [ClassData(typeof(CultureInlineDataTest))]
-        public async Task Error_Empty_Name(string culture)
-        {
-            var request = RequestRegisterUserJsonBuilder.Build();
-            request.Name = string.Empty;
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-            var response = await DoPost(METHOD, request, culture);
+        await using var responseBody = await response.Content.ReadAsStreamAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var responseData = await JsonDocument.ParseAsync(responseBody);
 
-            await using var responseBody = await response.Content.ReadAsStreamAsync();
+        var errors = responseData.RootElement.GetProperty("errors").EnumerateArray();
 
-            var responseData = await JsonDocument.ParseAsync(responseBody);
+        var expectedMessage = ResourceMessagesException.ResourceManager.GetString("NAME_EMPTY", new CultureInfo(culture));
 
-            var errors = responseData.RootElement.GetProperty("errors").EnumerateArray();
-
-            var expectedMessage = ResourceMessagesException.ResourceManager.GetString("NAME_EMPTY", new CultureInfo(culture));
-
-            errors.Should().ContainSingle().And.Contain(error => error.GetString()!.Equals(expectedMessage));
-        }
+        errors.Should().ContainSingle().And.Contain(error => error.GetString()!.Equals(expectedMessage));
     }
 }

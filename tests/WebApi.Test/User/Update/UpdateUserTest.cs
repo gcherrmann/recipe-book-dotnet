@@ -1,59 +1,59 @@
 ﻿using CommonTestUtilities.Requests;
 using CommonTestUtilities.Tokens;
 using FluentAssertions;
-using RecipeBook.Exceptions;
+using MyRecipeBook.Exceptions;
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using WebApi.Test.InlineData;
+using Xunit;
 
-namespace WebApi.Test.User.Update
+namespace WebApi.Test.User.Update;
+
+public class UpdateUserTest : MyRecipeBookClassFixture
 {
-    public class UpdateUserTest : RecipeBookClassFixture
+    private const string METHOD = "user";
+
+    private readonly Guid _userIdentifier;
+
+    public UpdateUserTest(CustomWebApplicationFactory factory) : base(factory)
     {
-        private const string METHOD = "user";
+        _userIdentifier = factory.GetUserIdentifier();
+    }
 
-        private readonly Guid _userIdentifier;
+    [Fact]
+    public async Task Success()
+    {
+        var request = RequestUpdateUserJsonBuilder.Build();
 
-        public UpdateUserTest(CustomWebApplicationFactory factory) : base(factory)
-        {
-            _userIdentifier = factory.GetUserIdentifier();
-        }
+        var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
 
-        [Fact]
-        public async Task Success()
-        {
-            var request = RequestUpdateUserJsonBuilder.Build();
+        var response = await DoPut(METHOD, request, token);
 
-            var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
 
-            var response = await DoPut(METHOD, request, token);
+    [Theory]
+    [ClassData(typeof(CultureInlineDataTest))]
+    public async Task Error_Empty_Name(string culture)
+    {
+        var request = RequestUpdateUserJsonBuilder.Build();
+        request.Name = string.Empty;
 
-            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        }
+        var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
 
-        [Theory]
-        [ClassData(typeof(CultureInlineDataTest))]
-        public async Task Error_Empty_Name(string culture)
-        {
-            var request = RequestUpdateUserJsonBuilder.Build();
-            request.Name = string.Empty;
+        var response = await DoPut(METHOD, request, token, culture);
 
-            var token = JwtTokenGeneratorBuilder.Build().Generate(_userIdentifier);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-            var response = await DoPut(METHOD, request, token, culture);
+        await using var responseBody = await response.Content.ReadAsStreamAsync();
 
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var responseData = await JsonDocument.ParseAsync(responseBody);
 
-            await using var responseBody = await response.Content.ReadAsStreamAsync();
+        var errors = responseData.RootElement.GetProperty("errors").EnumerateArray();
 
-            var responseData = await JsonDocument.ParseAsync(responseBody);
+        var expectedMessage = ResourceMessagesException.ResourceManager.GetString("NAME_EMPTY", new CultureInfo(culture));
 
-            var errors = responseData.RootElement.GetProperty("errors").EnumerateArray();
-
-            var expectedMessage = ResourceMessagesException.ResourceManager.GetString("NAME_EMPTY", new CultureInfo(culture));
-
-            errors.Should().HaveCount(1).And.Contain(c => c.GetString()!.Equals(expectedMessage));
-        }
+        errors.Should().HaveCount(1).And.Contain(c => c.GetString()!.Equals(expectedMessage));
     }
 }
