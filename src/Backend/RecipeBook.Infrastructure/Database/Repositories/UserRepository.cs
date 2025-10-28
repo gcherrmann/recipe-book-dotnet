@@ -1,39 +1,45 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RecipeBook.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using RecipeBook.Domain.Repositories.User;
 
 namespace RecipeBook.Infrastructure.Database.Repositories
 {
-    public class UserRepository : Domain.Repositories.User.IUserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly RecipeBookDbContext _dbContext;
-        public UserRepository(RecipeBookDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
 
-        public async Task Add(Domain.Entities.User user)
+        public UserRepository(RecipeBookDbContext dbContext) => _dbContext = dbContext;
+
+        public async Task Add(User user)
         {
             await _dbContext.Users.AddAsync(user);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<bool> EmailExists(string email)
-        {
-            return await _dbContext.Users.AnyAsync(u => u.Email == email && u.Active);
-        }
+        public async Task<bool> ExistActiveUserWithEmail(string email) => await _dbContext.Users.AnyAsync(user => user.Email.Equals(email) && user.Active);
+
+        public async Task<bool> ExistActiveUserWithIdentifier(Guid userIdentifier) => await _dbContext.Users.AnyAsync(user => user.UserIdentifier.Equals(userIdentifier) && user.Active);
 
         public async Task<User?> GetByEmailAndPassword(string email, string password)
         {
-            return await _dbContext.Users
-                .FirstOrDefaultAsync(u => u.Email == email && u.Password == password && u.Active);
+            return await _dbContext
+                .Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(user => user.Active && user.Email.Equals(email) && user.Password.Equals(password));
         }
 
-        public async Task<bool> ExistActiveUserWithIdentifier(Guid userIdentifier) => await _dbContext.Users.AnyAsync(user => user.UserIdentifier.Equals(userIdentifier) && user.Active);
+        public async Task<User> GetById(long id)
+        {
+            return await _dbContext
+                .Users
+                .FirstAsync(user => user.Id == id);
+        }
+
+        public async Task Update(User user)
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+        }
 
     }
 }

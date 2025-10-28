@@ -7,11 +7,6 @@ using FluentAssertions;
 using RecipeBook.Application.UseCases.User.Register;
 using RecipeBook.Exceptions;
 using RecipeBook.Exceptions.ExceptionsBase;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UseCases.Test.User.Register
 {
@@ -59,9 +54,9 @@ namespace UseCases.Test.User.Register
 
         private RegisterUserUseCase CreateUseCase(string email = null)
         {
-            
-            var mapper = MapperBuilder.Builder();
-            var passwordEncripter = PasswordEncrypterBuilder.Build();
+
+            var mapper = MapperBuilder.Build();
+            var passwordEncripter = PasswordEncripterBuilder.Build();
             var userRepository = new UserRepositoryBuilder().Build();
             var accessTokenGenerator = JwtTokenGeneratorBuilder.Build();
 

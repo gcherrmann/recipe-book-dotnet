@@ -97,6 +97,15 @@ namespace RecipeBook.Exceptions {
         }
         
         /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a Senha inválida..
+        /// </summary>
+        public static string INVALID_PASSWORD {
+            get {
+                return ResourceManager.GetString("INVALID_PASSWORD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Consulta uma cadeia de caracteres localizada semelhante a O nome não pode estar vazio..
         /// </summary>
         public static string NAME_EMPTY {
@@ -115,6 +124,15 @@ namespace RecipeBook.Exceptions {
         }
         
         /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a Senhas não são iguais..
+        /// </summary>
+        public static string PASSWORD_DIFFERENT_CURRENT_PASSWORD {
+            get {
+                return ResourceManager.GetString("PASSWORD_DIFFERENT_CURRENT_PASSWORD", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Consulta uma cadeia de caracteres localizada semelhante a A senha não pode ser vazia..
         /// </summary>
         public static string PASSWORD_EMPTY {
@@ -124,7 +142,7 @@ namespace RecipeBook.Exceptions {
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a Erro desconhecido.
+        ///   Consulta uma cadeia de caracteres localizada semelhante a Erro desconhecido..
         /// </summary>
         public static string UNKNOWN_ERROR {
             get {
@@ -133,7 +151,7 @@ namespace RecipeBook.Exceptions {
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a Usuário não encontrado.
+        ///   Consulta uma cadeia de caracteres localizada semelhante a Usuário não encontrado..
         /// </summary>
         public static string USER_NOT_FOUND {
             get {

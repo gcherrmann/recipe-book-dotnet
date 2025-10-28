@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using RecipeBook.Communication.Requests;
+using RecipeBook.Communication.Responses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,16 +14,18 @@ namespace RecipeBook.Application.Services.AutoMapper
         public AutoMapping()
         {
             RequestToDomain();
+            DomainToResponse();
         }
 
         private void RequestToDomain()
         {
-            CreateMap<RequestRegisterUserJson, Domain.Entities.User>().ForMember(dest => dest.Password, opt =>opt.Ignore());
+            CreateMap<RequestRegisterUserJson, Domain.Entities.User>()
+                .ForMember(dest => dest.Password, opt => opt.Ignore());
         }
 
         private void DomainToResponse()
         {
-
+            CreateMap<Domain.Entities.User, ResponseUserProfileJson>();
         }
     }
 }

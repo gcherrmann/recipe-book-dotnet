@@ -9,7 +9,7 @@ namespace RecipeBook.API.Middleware
 
         public CultureMiddleware(RequestDelegate next)
         {
-            _next = next;   
+            _next = next;
         }
 
         public async Task Invoke(HttpContext context)
@@ -20,11 +20,11 @@ namespace RecipeBook.API.Middleware
 
             var cultureInfo = new CultureInfo("en");
 
-            if (!string.IsNullOrWhiteSpace(culture) && supportedCultures.Any(c=> c.Name.Equals(culture)))
+            if (!string.IsNullOrWhiteSpace(culture) && supportedCultures.Any(c => c.Name.Equals(culture)))
             {
                 cultureInfo = new CultureInfo(culture);
             }
- 
+
             CultureInfo.CurrentCulture = cultureInfo;
             CultureInfo.CurrentUICulture = cultureInfo;
 

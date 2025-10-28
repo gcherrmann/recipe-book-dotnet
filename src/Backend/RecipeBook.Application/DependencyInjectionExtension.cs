@@ -1,42 +1,37 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using RecipeBook.Application.Cryptography;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using RecipeBook.Application.Services.AutoMapper;
 using RecipeBook.Application.UseCases.Login.DoLogin;
+using RecipeBook.Application.UseCases.User.ChangePassword;
+using RecipeBook.Application.UseCases.User.Profile;
 using RecipeBook.Application.UseCases.User.Register;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using RecipeBook.Application.UseCases.User.Update;
 
 namespace RecipeBook.Application
 {
     public static class DependencyInjectionExtension
     {
-        public static void AddApplicationServices(this IServiceCollection services)
+        public static void AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
-            AddUseCases(services);
             AddAutoMapper(services);
-            AddPasswordEncrypter(services);
+            AddUseCases(services);
         }
 
         private static void AddAutoMapper(IServiceCollection services)
         {
-            var mapper = new AutoMapper.MapperConfiguration(cfg => cfg.AddProfile<AutoMapping>()).CreateMapper();
-            services.AddScoped(option => mapper);
-
-
+            services.AddScoped(option => new AutoMapper.MapperConfiguration(options =>
+            {
+                options.AddProfile(new AutoMapping());
+            }).CreateMapper());
         }
 
         private static void AddUseCases(IServiceCollection services)
         {
             services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
             services.AddScoped<IDoLoginUseCase, DoLoginUseCase>();
-        }
-
-        private static void AddPasswordEncrypter(IServiceCollection services)
-        {
-            services.AddScoped(option => new PasswordEncripter());
+            services.AddScoped<IGetUserProfileUseCase, GetUserProfileUseCase>();
+            services.AddScoped<IUpdateUserUseCase, UpdateUserUseCase>();
+            services.AddScoped<IChangePasswordUseCase, ChangePasswordUseCase>();
         }
     }
 }

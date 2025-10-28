@@ -4,11 +4,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RecipeBook.Infrastructure.Database;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WebApi.Test
 {
@@ -19,7 +14,7 @@ namespace WebApi.Test
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.UseEnvironment("Test").ConfigureServices(services => 
+            builder.UseEnvironment("Test").ConfigureServices(services =>
             {
                 var descriptor = services.SingleOrDefault(
                     d => d.ServiceType ==
@@ -51,6 +46,7 @@ namespace WebApi.Test
         public string GetEmail() => _user.Email;
         public string GetPassword() => _password;
         public string GetName() => _user.Name;
+        public Guid GetUserIdentifier() => _user.UserIdentifier;
 
         private void StartDatabase(RecipeBookDbContext context)
         {

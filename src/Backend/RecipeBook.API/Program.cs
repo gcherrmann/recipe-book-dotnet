@@ -2,7 +2,9 @@ using Microsoft.OpenApi.Models;
 using RecipeBook.API.Converters;
 using RecipeBook.API.Filters;
 using RecipeBook.API.Middleware;
+using RecipeBook.API.Token;
 using RecipeBook.Application;
+using RecipeBook.Domain.Security.Tokens;
 using RecipeBook.Infrastructure;
 using RecipeBook.Infrastructure.Migrations;
 
@@ -53,9 +55,13 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddMvc(options => options.Filters.Add(typeof(ExceptionFilter)));
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddApplicationServices();
+builder.Services.AddApplication(builder.Configuration);
+
+builder.Services.AddScoped<ITokenProvider, HttpContextTokenValue>();
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
+builder.Services.AddHttpContextAccessor();
 
 
 var app = builder.Build();
@@ -82,14 +88,14 @@ app.Run();
 
 void MigrateDatabase()
 {
-    if(builder.Configuration.IsTestEnvironment())
+    if (builder.Configuration.IsTestEnvironment())
     {
         return;
     }
 
     var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>()
         .CreateScope();
-        
+
     DatabaseMigration.Migrate(builder.Configuration.GetConnectionString("ConnectionMySql"), serviceScope.ServiceProvider);
 }
 

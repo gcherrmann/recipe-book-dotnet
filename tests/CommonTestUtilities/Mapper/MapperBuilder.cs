@@ -1,18 +1,14 @@
 ﻿using AutoMapper;
 using RecipeBook.Application.Services.AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace CommonTestUtilities.Mapper
 {
     public class MapperBuilder
     {
-        public static IMapper Builder()
+        public static IMapper Build()
         {
-            return new AutoMapper.MapperConfiguration(options =>
+            return new MapperConfiguration(options =>
             {
                 options.AddProfile(new AutoMapping());
             }).CreateMapper();

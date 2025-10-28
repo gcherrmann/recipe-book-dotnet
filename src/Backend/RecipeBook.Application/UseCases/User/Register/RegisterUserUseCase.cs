@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
-using RecipeBook.Application.Cryptography;
 using RecipeBook.Communication.Requests;
 using RecipeBook.Communication.Responses;
 using RecipeBook.Domain.Repositories.User;
+using RecipeBook.Domain.Security.Cryptography;
 using RecipeBook.Domain.Security.Tokens;
 using RecipeBook.Exceptions;
 using RecipeBook.Exceptions.ExceptionsBase;
@@ -14,10 +14,10 @@ namespace RecipeBook.Application.UseCases.User.Register
 
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
-        private readonly PasswordEncripter _passwordEncripter;
+        private readonly IPasswordEncripter _passwordEncripter;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
 
-        public RegisterUserUseCase(IUserRepository userRepository, IMapper mapper, PasswordEncripter passwordEncripter,
+        public RegisterUserUseCase(IUserRepository userRepository, IMapper mapper, IPasswordEncripter passwordEncripter,
             IAccessTokenGenerator accessTokenGenerator)
         {
             _userRepository = userRepository;
@@ -28,7 +28,7 @@ namespace RecipeBook.Application.UseCases.User.Register
 
         public async Task<ResponseRegisterUserJson> Execute(RequestRegisterUserJson request)
         {
-            
+
             await Validate(request);
 
             var user = _mapper.Map<Domain.Entities.User>(request);
@@ -39,7 +39,6 @@ namespace RecipeBook.Application.UseCases.User.Register
 
             await _userRepository.Add(user);
 
-
             return new ResponseRegisterUserJson { Name = user.Name };
         }
 
@@ -49,8 +48,8 @@ namespace RecipeBook.Application.UseCases.User.Register
 
             var result = validator.Validate(request);
 
-            var emailExists = await _userRepository.EmailExists(request.Email);
-            if(emailExists)
+            var emailExists = await _userRepository.ExistActiveUserWithEmail(request.Email);
+            if (emailExists)
             {
                 result.Errors.Add(new FluentValidation.Results.ValidationFailure(string.Empty, ResourceMessagesException.EMAIL_ALREADY_REGISTERED));
             }
